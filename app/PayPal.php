@@ -21,7 +21,94 @@ class PayPal
 
     public function generate()
     {
-        
+        $payment = \PaypalPayment::payment()->setIntent('sale')
+            ->setPayer($this->payer())
+            ->setTransactions([$this->transaction()])
+            ->setRedirectUrls($this->redirectURLs());
+
+        try {
+            $payment->create($this->_apiContext);
+        } catch (Exception $e) {
+            dd($e);
+            exit(1);
+        }
+
+        return $payment;
+    }
+
+    /**
+     * Returns payment's info
+     *
+     */
+    public function payer()
+    {
+        return \PaypalPayment::payer()
+            ->setPaymentMethod('paypal');
+    }
+
+    /**
+     * Returns transaction's info
+     *
+     */
+    public function transaction()
+    {
+        return \PaypalPayment::transaction()
+            ->setAmount($this->amount())
+            ->setItemList($this->items())
+            ->setDescription('Tu compra en ssldigital')
+            ->setInvoiceNumber(uniqid());
+    }
+
+    public function items()
+    {
+        $items = [];
+
+        array_push($items, $this->paypalItem());
+
+        return \PaypalPayment::itemList()->setItems($items);
+    }
+
+    public function paypalItem()
+    {
+        return \PaypalPayment::item()->setName('Certificado digital')
+            ->setDescription('El siguiente es un certificado digital')
+            ->setCurrency('USD')
+            ->setQuantity(1)
+            ->setPrice(5);
+    }
+
+    public function amount()
+    {
+        return \PaypalPayment::amount()
+            ->setCurrency('USD')
+            ->setTotal('5');
+    }
+
+    /**
+     * 
+     *
+     */
+    public function redirectURLs()
+    {
+        $baseURL = url('/');
+
+        return \PaypalPayment::redirectUrls()
+            ->setReturnUrl("$baseURL/payments/store")
+            ->setCancelUrl("$baseURL/carrito");
+    }
+
+    /**
+     *
+     *
+     */
+    public function execute($paymentId, $payerId)
+    {
+        $payment = \PaypalPayment::getById($paymentId, $this->_apiContext);
+
+        $execution = \PaypalPayment::PaymentExecution()
+            ->setPayerId($payerId);
+
+        return $payment->execute($execution, $this->_apiContext);
     }
 
 }

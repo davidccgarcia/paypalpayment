@@ -17,4 +17,14 @@ Route::get('/', function () {
 
 Route::get('paypal', function () {
     $paypal = new App\PayPal(1);
+    $payment = $paypal->generate();
+
+    return redirect($payment->getApprovalLink());
+});
+
+Route::get('payments/store', function (Illuminate\Http\Request $request) {
+    $shopping_cart_id = 1;
+
+    $paypal = new App\PayPal(1);
+    dd($paypal->execute($request->paymentId, $request->PayerID));
 });
